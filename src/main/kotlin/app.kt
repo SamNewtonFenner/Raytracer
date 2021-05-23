@@ -5,16 +5,18 @@ import javax.swing.Timer
 
 class App : Runnable, ActionListener {
 
-    private val windowWidth = 2000
-    private val windowHeight = 1000
-    private val renderWidth = 2000
-    private val renderHeight = 1000
-    private val samples = 50
+    private val imageScalar = 3
+    private val renderWidth = 800
+    private val renderHeight = 400
+    private val samples = 1
     private val appTitle = "Raycaster"
     private val maxReflections = 5
 
     private var originXoffset = 0F
     private var up = true
+
+    private val windowWidth = renderWidth * imageScalar
+    private val windowHeight = renderHeight * imageScalar
 
     private val world = World(
         arrayOf(
@@ -49,7 +51,7 @@ class App : Runnable, ActionListener {
         frame.setLocationRelativeTo(null)
         frame.isVisible = true
 
-        panel.setNewImage(camera.getImage(windowWidth, windowHeight))
+        panel.setNewImage(camera.getImage(imageScalar))
 
 //        val timer = Timer(50, this)
 //        timer.start()
@@ -70,7 +72,7 @@ class App : Runnable, ActionListener {
         if(originXoffset > 2) up = false
         if(originXoffset < -2) up = true
 
-        panel.setNewImage(camera.getImage(windowWidth, windowHeight))
+        panel.setNewImage(camera.getImage(imageScalar))
         panel.repaint()
     }
 

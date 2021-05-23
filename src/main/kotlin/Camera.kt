@@ -10,22 +10,36 @@ class Camera(
     private val renderHeight: Int,
 )
 {
-    fun getImage(width: Int, height: Int): Image {
-        val image = Image(width, height)
+    fun getImage(scalingFactor: Int = 1): Image {
+        var windowWidth = renderWidth * scalingFactor
+        var windowLength = renderHeight * scalingFactor
+        val image = Image(windowWidth, windowLength)
         val colourGrid = getColourGrid(renderWidth, renderHeight)
 
-        for (j in 0 until height) {
-            for (i in 0 until width) {
+        val startTime = System.currentTimeMillis()
+        drawGridToImage(windowLength, windowWidth, image, colourGrid, scalingFactor)
+        val endTime = System.currentTimeMillis()
+        println("Image drawing took ${endTime - startTime}ms")
+
+        return image
+    }
+
+    private fun drawGridToImage(
+        windowLength: Int,
+        windowWidth: Int,
+        image: Image,
+        colourGrid: Array<Array<Colour>>,
+        scalingFactor: Int
+    ) {
+        for (j in 0 until windowLength) {
+            for (i in 0 until windowWidth) {
                 image.setColour(
                     i,
                     j,
-                    colourGrid
-                            [((i/width.toFloat()) * renderWidth).toInt()]
-                            [((j/height.toFloat()) * renderHeight).toInt()])
+                    colourGrid[i / scalingFactor][j / scalingFactor]
+                )
             }
         }
-
-        return image
     }
 
     private fun getColourGrid(width: Int, height: Int): Array<Array<Colour>> {
@@ -53,24 +67,15 @@ class Camera(
 
     private fun getColourForPixel(i: Int, j: Int, width: Int, height: Int): Colour {
         var colour = Colour.black()
-        var previous = Colour.black()
         for (s in 0 until samplesPerPixel) {
             val u: Float = (i + Random.nextFloat()) / width.toFloat()
             var v: Float = (j + Random.nextFloat()) / height.toFloat()
             val ray = getRay(u, 1 - v)
             val sample =  getColourForRay(ray, 0)
-            if (coloursSimilar(sample, previous)) {
-                return sample;
-            }
-            previous = sample;
             colour = colour + sample
         }
         colour /= samplesPerPixel
         return colour
-    }
-
-    private fun coloursSimilar(colourA: Colour, colourB: Colour): Boolean {
-        return colourA == colourB;
     }
 
     private fun getRay(u: Float, v: Float): Ray {
