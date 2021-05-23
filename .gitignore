@@ -20,7 +20,9 @@
 *.rar
 
 .gradle
+.idea
 **/build/
+**/out
 !src/**/build/
 
 # Ignore Gradle GUI config
