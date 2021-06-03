@@ -6,9 +6,9 @@ import javax.swing.Timer
 class App : Runnable, ActionListener {
 
     private val imageScalar = 3
-    private val renderWidth = 800
-    private val renderHeight = 400
-    private val samples = 1
+    private val renderWidth = 600
+    private val renderHeight = 300
+    private val samples = 10
     private val appTitle = "Raycaster"
     private val maxReflections = 5
 
@@ -42,7 +42,8 @@ class App : Runnable, ActionListener {
         CameraMode.MATERIAL,
         maxReflections,
         renderWidth,
-        renderHeight
+        renderHeight,
+        imageScalar
     )
 
     private fun startGUIAndRun() {
@@ -51,29 +52,34 @@ class App : Runnable, ActionListener {
         frame.setLocationRelativeTo(null)
         frame.isVisible = true
 
-        panel.setNewImage(camera.getImage(imageScalar))
+        panel.setNewImage(camera.getImage())
 
-//        val timer = Timer(50, this)
-//        timer.start()
+        val timer = Timer(500, this)
+        timer.start()
     }
 
     override fun actionPerformed(e: ActionEvent?) {
-        camera.projection =  Projection(
+//      moveCamera()
+
+        panel.setNewImage(camera.getImage())
+        panel.repaint()
+
+    }
+
+    private fun moveCamera() {
+        camera.projection = Projection(
             Vector(0F + originXoffset, 0F, 0F),
             Vector(-2.0F + originXoffset, -1.0F, -4.0F),
             Vector(0.0F, 2.0F, 0.0F),
             Vector(4.0F, 0.0F, 0.0F)
         )
         if (up) {
-            originXoffset +=  0.03F
+            originXoffset += 0.03F
         } else {
-            originXoffset -=  0.03F
+            originXoffset -= 0.03F
         }
-        if(originXoffset > 2) up = false
-        if(originXoffset < -2) up = true
-
-        panel.setNewImage(camera.getImage(imageScalar))
-        panel.repaint()
+        if (originXoffset > 2) up = false
+        if (originXoffset < -2) up = true
     }
 
     override fun run() {

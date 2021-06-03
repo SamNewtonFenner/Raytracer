@@ -3,79 +3,76 @@ import kotlin.random.Random
 class Camera(
     var projection: Projection,
     private val world: World,
-    private val samplesPerPixel: Int,
+    private val samplesPerPass: Int,
     private val mode: CameraMode,
     private val maxReflections: Int,
     private val renderWidth: Int,
     private val renderHeight: Int,
+    private val scalingFactor: Int = 1
 )
 {
-    fun getImage(scalingFactor: Int = 1): Image {
-        var windowWidth = renderWidth * scalingFactor
-        var windowLength = renderHeight * scalingFactor
-        val image = Image(windowWidth, windowLength)
-        val colourGrid = getColourGrid(renderWidth, renderHeight)
+    private val windowWidth = renderWidth * scalingFactor
+    private val windowLength = renderHeight * scalingFactor
+    private val grid = getEmptyColourGrid(renderWidth, renderHeight)
+    private val image = Image(windowWidth, windowLength)
+
+    fun getImage(): Image {
+
+        topUpColourGrid();
 
         val startTime = System.currentTimeMillis()
-        drawGridToImage(windowLength, windowWidth, image, colourGrid, scalingFactor)
+        drawGridToImage()
         val endTime = System.currentTimeMillis()
         println("Image drawing took ${endTime - startTime}ms")
 
         return image
     }
 
-    private fun drawGridToImage(
-        windowLength: Int,
-        windowWidth: Int,
-        image: Image,
-        colourGrid: Array<Array<Colour>>,
-        scalingFactor: Int
-    ) {
+    private fun drawGridToImage() {
         for (j in 0 until windowLength) {
             for (i in 0 until windowWidth) {
                 image.setColour(
                     i,
                     j,
-                    colourGrid[i / scalingFactor][j / scalingFactor]
+                    grid[i / scalingFactor][j / scalingFactor].getColour()
                 )
             }
         }
     }
 
-    private fun getColourGrid(width: Int, height: Int): Array<Array<Colour>> {
+    private fun getEmptyColourGrid(width: Int, height: Int): Array<Array<ColourBucket>> {
+        return Array(width) { Array(height) { ColourBucket() } }
+    }
+
+    private fun topUpColourGrid() {
         val startTime = System.currentTimeMillis()
         var displayedProgress = 0
 
-        val grid = Array(width) { Array(height) { Colour.black() } }
-        for (j in 0 until height) {
-            for (i in 0 until width) {
-                grid[i][j] = getColourForPixel(i, j, width, height)
+        for (j in 0 until grid[0].size) {
+            for (i in grid.indices) {
+                grid[i][j].addColours(getSamplesForPixel(i, j, grid.size, grid[0].size))
             }
 
-            var currentProgress = ((j.toFloat()/height)*100).toInt()
+            var currentProgress = ((j.toFloat()/grid[0].size)*100).toInt()
             if ( currentProgress > displayedProgress ) {
                 displayedProgress = currentProgress
-                println("Rendering... ${displayedProgress}%")
+                println("Sampling... ${displayedProgress}%")
             }
         }
 
         val endTime = System.currentTimeMillis()
-        println("Image generation took ${endTime - startTime}ms")
-
-        return grid
+        println("Sample collection took ${endTime - startTime}ms")
     }
 
-    private fun getColourForPixel(i: Int, j: Int, width: Int, height: Int): Colour {
-        var colour = Colour.black()
-        for (s in 0 until samplesPerPixel) {
+    private fun getSamplesForPixel(i: Int, j: Int, width: Int, height: Int): Collection<Colour> {
+        val samples = arrayListOf<Colour>()
+        for (s in 0 until samplesPerPass) {
             val u: Float = (i + Random.nextFloat()) / width.toFloat()
             var v: Float = (j + Random.nextFloat()) / height.toFloat()
             val ray = getRay(u, 1 - v)
-            val sample =  getColourForRay(ray, 0)
-            colour = colour + sample
+            samples.add(getColourForRay(ray, 0))
         }
-        colour /= samplesPerPixel
-        return colour
+        return samples
     }
 
     private fun getRay(u: Float, v: Float): Ray {
