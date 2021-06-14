@@ -1,75 +1,62 @@
+import kotlinx.coroutines.*
 import kotlin.random.Random
 
 class Camera(
     var projection: Projection,
     private val world: World,
-    private val samplesPerPass: Int,
-    private val mode: CameraMode,
-    private val maxReflections: Int,
-    private val renderWidth: Int,
-    private val renderHeight: Int,
-    private val scalingFactor: Int = 1
+    private val mode: CameraMode
 )
 {
-    private val windowWidth = renderWidth * scalingFactor
-    private val windowLength = renderHeight * scalingFactor
-    private val grid = getEmptyColourGrid(renderWidth, renderHeight)
-    private val image = Image(windowWidth, windowLength)
+    var renderSectionWidth = 50
+    var samplesPerPass = 1
+    var maxSamples = 20
+    var maxBounces = 10
+    var renderWidth = 400
+    var renderHeight = 200
+    var freshBuckets = false
 
-    fun getImage(): Image {
+    private var grid = getEmptyColourGrid()
 
+    fun colourGrid(): Array<Array<ColourBucket>> {
+        if (grid.size != renderWidth || maxSamples != grid[0][0].maxColours) grid = getEmptyColourGrid()
         topUpColourGrid();
-
-        val startTime = System.currentTimeMillis()
-        drawGridToImage()
-        val endTime = System.currentTimeMillis()
-        println("Image drawing took ${endTime - startTime}ms")
-
-        return image
+        return grid
     }
 
-    private fun drawGridToImage() {
-        for (j in 0 until windowLength) {
-            for (i in 0 until windowWidth) {
-                image.setColour(
-                    i,
-                    j,
-                    grid[i / scalingFactor][j / scalingFactor].getColour()
-                )
-            }
-        }
-    }
-
-    private fun getEmptyColourGrid(width: Int, height: Int): Array<Array<ColourBucket>> {
-        return Array(width) { Array(height) { ColourBucket() } }
+    private fun getEmptyColourGrid(): Array<Array<ColourBucket>> {
+        return Array(renderWidth) { Array(renderHeight) { ColourBucket(maxSamples) } }
     }
 
     private fun topUpColourGrid() {
-        val startTime = System.currentTimeMillis()
-        var displayedProgress = 0
-
-        for (j in 0 until grid[0].size) {
-            for (i in grid.indices) {
-                grid[i][j].addColours(getSamplesForPixel(i, j, grid.size, grid[0].size))
-            }
-
-            var currentProgress = ((j.toFloat()/grid[0].size)*100).toInt()
-            if ( currentProgress > displayedProgress ) {
-                displayedProgress = currentProgress
-                println("Sampling... ${displayedProgress}%")
+        runBlocking {
+            withContext(Dispatchers.IO) {
+                grid[0].indices.chunked(renderSectionWidth).forEach {
+                    launch {
+                        topUpGridSection(it)
+                    }
+                }
             }
         }
+    }
 
-        val endTime = System.currentTimeMillis()
-        println("Sample collection took ${endTime - startTime}ms")
+    private fun topUpGridSection(firstOrderIndexes: List<Int>) {
+        for (j in firstOrderIndexes) {
+            for (i in grid.indices) {
+                if(freshBuckets) {
+                    grid[i][j].setColours(getSamplesForPixel(i, j, grid.size, grid[0].size))
+                } else {
+                    grid[i][j].addColours(getSamplesForPixel(i, j, grid.size, grid[0].size))
+                }
+            }
+        }
     }
 
     private fun getSamplesForPixel(i: Int, j: Int, width: Int, height: Int): Collection<Colour> {
         val samples = arrayListOf<Colour>()
         for (s in 0 until samplesPerPass) {
             val u: Float = (i + Random.nextFloat()) / width.toFloat()
-            var v: Float = (j + Random.nextFloat()) / height.toFloat()
-            val ray = getRay(u, 1 - v)
+            var v: Float = 1 - (j + Random.nextFloat()) / height.toFloat()
+            val ray = getRay(u, v)
             samples.add(getColourForRay(ray, 0))
         }
         return samples
@@ -82,7 +69,7 @@ class Camera(
 
     private fun getColourForRay(ray: Ray, step: Int): Colour {
         var hit = tryToGetHit(ray)
-        return if (hit != null && step < maxReflections) {
+        return if (hit != null && step < maxBounces) {
             when (mode) {
                 CameraMode.SURFACE_NORMAL -> getSurfaceNormalColour(hit)
                 CameraMode.AMBIENT_OCCLUSION -> getAmbientOcclusionColour(ray, hit, step + 1)
@@ -117,7 +104,7 @@ class Camera(
     }
 
     private fun getClosestHit(hits: List<Hit>): Hit {
-        return hits.minByOrNull { hit -> hit.distance }!!
+        return hits.minBy { hit -> hit.distance }!!
     }
 
     private fun hitWithinBounds(hit: Hit): Boolean {
