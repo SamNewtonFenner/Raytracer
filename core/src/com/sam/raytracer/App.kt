@@ -18,17 +18,11 @@ class App(private val width: Int, private val height: Int) : KtxGame<KtxScreen>(
         )
     )
 
-    private val projection = Projection(
-        Vector(0F, 0F, 0F),
-        Vector(-2.0F, -1.0F, -4.0F),
-        Vector(0.0F, 2.0F, 0.0F),
-        Vector(4.0F, 0.0F, 0.0F)
-    )
-
     private val camera = Camera(
-        projection,
         world,
-        CameraMode.MATERIAL
+        CameraMode.MATERIAL,
+        60F,
+        width.toFloat() / height
     )
 
     override fun create() {

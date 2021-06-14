@@ -2,9 +2,10 @@ import kotlinx.coroutines.*
 import kotlin.random.Random
 
 class Camera(
-    var projection: Projection,
     private val world: World,
-    private val mode: CameraMode
+    private val mode: CameraMode,
+    var fieldOfView: Float,
+    var aspectRatio: Float
 )
 {
     var renderSectionWidth = 50
@@ -14,6 +15,9 @@ class Camera(
     var renderWidth = 400
     var renderHeight = 200
     var freshBuckets = false
+    var initialOrigin = Vector(0F,0F,0F)
+    var initialDirection = Vector(0F,0F,1F)
+    var projection: Projection = Projection(initialOrigin, initialDirection, fieldOfView, aspectRatio)
 
     private var grid = getEmptyColourGrid()
 
@@ -63,8 +67,8 @@ class Camera(
     }
 
     private fun getRay(u: Float, v: Float): Ray {
-        val projectionTarget = projection.lowerLeftCorner + projection.width * u + projection.height * v
-        return Ray(projection.origin,projectionTarget - projection.origin)
+        val target = projection.lowerLeftCorner + (projection.horizontal * u) + (projection.vertical * v)
+        return Ray(projection.origin,target - projection.origin)
     }
 
     private fun getColourForRay(ray: Ray, step: Int): Colour {

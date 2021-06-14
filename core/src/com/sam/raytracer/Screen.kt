@@ -81,10 +81,10 @@ class Screen(private val game: App, private val camera: Camera, private val widt
 
             camera.freshBuckets = true
             camera.projection = Projection(
-                Vector(0F + originXoffset, 0F, 0F + originZoffset),
-                Vector(-2.0F + originXoffset, -1.0F, -4.0F + originZoffset),
-                Vector(0.0F, 2.0F, 0.0F),
-                Vector(4.0F, 0.0F, 0.0F)
+                Vector(camera.initialOrigin.x + originXoffset, camera.initialOrigin.y, camera.initialOrigin.z + originZoffset),
+                Vector(camera.initialDirection.x + originXoffset, camera.initialDirection.y, camera.initialDirection.z + originZoffset),
+                camera.fieldOfView,
+                camera.aspectRatio
             )
         }
     }
