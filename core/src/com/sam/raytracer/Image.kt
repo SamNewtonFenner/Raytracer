@@ -22,5 +22,4 @@ class Image(width:Int, height: Int) {
         return awtImage
     }
 
-
 }
