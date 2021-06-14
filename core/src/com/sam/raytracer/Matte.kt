@@ -1,8 +1,12 @@
-class Matte(override val albedo: Colour): Material() {
+class Matte(private val albedo: Colour): Material() {
 
     override fun scatter(ray: Ray, hit: Hit): Ray {
-        var target = hit.point + hit.normal + getRandomVectorWithinUnit()
+        val target = hit.point + hit.normal + getRandomVectorWithinUnit()
         return Ray(hit.point, target - hit.point)
+    }
+
+    override fun getColourForHit(hit: Hit): Colour {
+        return albedo
     }
 
 }

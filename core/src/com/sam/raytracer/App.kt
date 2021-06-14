@@ -12,7 +12,7 @@ class App(private val width: Int, private val height: Int) : KtxGame<KtxScreen>(
     private val world = World(
         arrayOf(
             Sphere(Vector(0F, 0F, -4F), 0.5F, Metal(Colour(0.8F, 0.8F, 0.8F), 0F)),
-            Sphere(Vector(0F, -100.5F, -4F), 100F, Matte(Colour.green())),
+            Sphere(Vector(0F, -100.5F, -4F), 100F, CheckerBox(Colour.green(), Colour.white())),
             Sphere(Vector(-1F,0F, -4F), 0.5F, Matte(Colour(0.8F, 0.3F, 0.3F))),
             Sphere(Vector(1F, 0F, -4F), 0.5F, Metal(Colour(0.5F, 0.7F, 0.8F), 0F))
         )

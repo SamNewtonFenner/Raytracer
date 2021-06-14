@@ -11,8 +11,8 @@ class Camera(
     var samplesPerPass = 1
     var maxSamples = 20
     var maxBounces = 10
-    var renderWidth = 400
-    var renderHeight = 200
+    var renderWidth = 500
+    var renderHeight = 250
     var freshBuckets = false
 
     private var grid = getEmptyColourGrid()
@@ -85,14 +85,13 @@ class Camera(
     }
 
     private fun getAmbientOcclusionColour(ray: Ray, hit: Hit, step: Int): Colour {
-        val matte = Matte(Colour.lightGrey())
-        var scatteredRay = matte.scatter(ray, hit)
-        return matte.albedo * getColourForRay(scatteredRay, step)
+        var scatteredRay = Matte(Colour.lightGrey()).scatter(ray, hit)
+        return hit.material.getColourForHit(hit) * getColourForRay(scatteredRay, step)
     }
 
     private fun getMaterialColour(ray: Ray, hit: Hit, step: Int): Colour {
         val scatteredRay = hit.material.scatter(ray, hit)
-        return hit.material.albedo * getColourForRay(scatteredRay, step)
+        return hit.material.getColourForHit(hit) * getColourForRay(scatteredRay, step)
     }
 
     private fun tryToGetHit(ray: Ray): Hit? {

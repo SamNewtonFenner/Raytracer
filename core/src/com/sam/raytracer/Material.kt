@@ -1,8 +1,8 @@
 import kotlin.random.Random
 
 abstract class Material {
-    abstract val albedo: Colour
     abstract fun scatter(ray: Ray, hit: Hit): Ray
+    abstract fun getColourForHit(hit: Hit): Colour
 
     fun getRandomVectorWithinUnit(): Vector {
         var vector: Vector
@@ -15,4 +15,5 @@ abstract class Material {
     private fun randomUnitVector(): Vector {
         return Vector(Random.nextFloat(), Random.nextFloat(), Random.nextFloat())
     }
+
 }
